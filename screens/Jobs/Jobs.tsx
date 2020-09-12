@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { View } from 'react-native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { GlobalContext } from '@components/ContextProvider';
@@ -107,6 +107,31 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
 
     // Step 1: Remove jobs where the schedule doesn't align with the users' availability.
 
+    // loop through newJobs (type: Array)
+    for (var i=0; i<newJobs.length; i++){
+      // get the schedule of each job (type: Object)
+      const sched: string[] = newJobs[i]["schedule"]
+      // check if the job schedule doesn't include availability
+      if (availability.monday == false && sched.includes("Monday")){
+        // remove jobs where the schedule doesnt align
+        newJobs.splice(i, 1)
+        // account for when an item would get removed (so the for loop wouldn't skip over items)
+        i--
+      } else if (availability.tuesday == false && sched.includes("Tuesday")){
+        newJobs.splice(i, 1)
+        i--
+      } else if (availability.wednesday == false && sched.includes("Wednesday")){
+        newJobs.splice(i, 1)
+        i--
+      } else if (availability.thursday == false && sched.includes("Thursday")){
+        newJobs.splice(i, 1)
+        i--
+      } else if (availability.friday == false && sched.includes("Friday")){
+        newJobs.splice(i, 1)
+        i--
+      }
+    }
+
     // Step 2: Save into state
     this.setState({ jobs: newJobs });
   };
@@ -128,6 +153,76 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
   renderCards(): React.ReactElement {
     return <>{this.state.jobs.map((record, index) => this.createJobCard(record, index))}</>;
   }
+
+  const Overlay = () =>{
+    const [visible, setVisible] = useState(false);
+    const { monday, tuesday, wednesday, thursday, friday } = this.state.availability;
+    return (
+      <View>
+        <Overlay isVisible={visible}>
+          <View>
+            <CheckBox
+              title="Monday"
+              checked={monday}
+              onPress={() =>
+                this.setState(prev => {
+                  return { ...prev, availability: { ...prev.availability, monday: !monday } };
+                })
+              }
+            />
+            <CheckBox
+              title="Tuesday"
+              checked={tuesday}
+              onPress={() =>
+                this.setState(prev => {
+                  return { ...prev, availability: { ...prev.availability, tuesday: !tuesday } };
+                })
+              }
+            />
+            <CheckBox
+              title="Wednesday"
+              checked={wednesday}
+              onPress={(): void =>
+                this.setState(prev => {
+                  return { ...prev, availability: { ...prev.availability, wednesday: !wednesday } };
+                })
+              }
+            />
+            <CheckBox
+              title="Thursday"
+              checked={thursday}
+              onPress={(): void =>
+                this.setState(prev => {
+                  return { ...prev, availability: { ...prev.availability, thursday: !thursday } };
+                })
+              }
+            />
+            <CheckBox
+              title="Friday"
+              checked={friday}
+              onPress={(): void =>
+                this.setState(prev => {
+                  return { ...prev, availability: { ...prev.availability, friday: !friday } };
+                })
+              }
+            />
+          </View>
+          <View style={{ alignItems: 'center', marginVertical: 20 }}>
+            <Button
+              title="Filter Search"
+              containerStyle={{ width: '50%' }}
+              onPress={(): void => {
+                this.filterJobs(getJobs(), this.state.availability);
+                //add some function here to close the overlay and then display the jobs?
+                //and reset the state?
+                setVisible(!visible)
+              }}
+            />
+          </View>
+        </Overlay>
+      </View>
+    );
+  };
 
   render() {
     const { monday, tuesday, wednesday, thursday, friday } = this.state.availability;
@@ -198,6 +293,7 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
             containerStyle={{ width: '50%' }}
             onPress={(): void => {
               this.filterJobs(getJobs(), this.state.availability);
+
             }}
           />
         </View>
